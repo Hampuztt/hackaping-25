@@ -22,15 +22,35 @@ CUSTOMER_SUPPORT_ID = "asst_tNzygYXafJFqQJATdQYoEefQ"
 PRODUCT_INFO_ID = "asst_Tsjwb1LlBD3ElVP6Jbzsa6JY"
 
 
+def customer_question(usr_msg, assistant_id):
+    client.beta.threads.messages.create(
+        thread_id=THREAD.id, role="user", content=usr_msg
+    )
+
+    run = client.beta.threads.runs.create(thread_id=THREAD.id, assistant_id=assistant_id)
+
+    while run.status != "completed":
+        run = client.beta.threads.runs.retrieve(thread_id=THREAD.id, run_id=run.id)
+
+    messages = client.beta.threads.messages.list(thread_id=THREAD.id)
+
+    for msg in messages.data:
+        if msg.role == "assistant":
+            response = msg.content[0].text.value.strip()
+            print(f"{response=}")
+            return response
+
+
 @app.route("/get-response", methods=["POST"])
 def get_response(usr_msg):
     indata = request.json.get("input", "")
+    # indata=usr_msg
 
     if not indata:
         return "No message recieved"
 
     assistant_to_use = determine_assistant(usr_msg)
-    response = customer_question(assistant_to_use)
+    response = customer_question(usr_msg, assistant_to_use)
     url = ""
     if assistant_to_use == PRODUCT_INFO_ID:
         url = generate_img("Genearate an image based about shoes")
@@ -78,7 +98,7 @@ Message: "{msg}"
     )
 
     args = response.choices[0].message.tool_calls[0].function.arguments
-    return json.loads(args)["assistant"]
+    return CUSTOMER_SUPPORT_ID if json.loads(args)["assistant"] == "refunds" else PRODUCT_INFO_ID
 
 
 def generate_img(prompt: str):
@@ -87,9 +107,9 @@ def generate_img(prompt: str):
 
 
 if __name__ == "__main__":
-    msg = "I'm not happy with my shoes, give me refund"
+    # msg = "tell me about your cool shoes"
     # msg = "I'm not happy with my shoes, give me refund"
     # print(determine_assistant(msg))
     # exit(0)
-    # get_response("I'm not happy with my shoes, give me refund")
+    # print(get_response("I'm not happy with my shoes, give me refund"))
     app.run(port="3002", debug=True)
