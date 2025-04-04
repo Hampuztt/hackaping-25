@@ -1,6 +1,5 @@
 import json
-from json import jsonify
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 import openai
@@ -23,7 +22,6 @@ CUSTOMER_SUPPORT_ID = "asst_tNzygYXafJFqQJATdQYoEefQ"
 PRODUCT_INFO_ID = "asst_Tsjwb1LlBD3ElVP6Jbzsa6JY"
 
 
-
 @app.route("/get-response", methods=["POST"])
 def get_response(usr_msg):
     indata = request.json.get("input", "")
@@ -36,7 +34,6 @@ def get_response(usr_msg):
     url = ""
     if assistant_to_use == PRODUCT_INFO_ID:
         url = generate_img("Genearate an image based about shoes")
-
 
     return jsonify({"response": response, "url": url})
 
@@ -82,7 +79,6 @@ Message: "{msg}"
 
     args = response.choices[0].message.tool_calls[0].function.arguments
     return json.loads(args)["assistant"]
-
 
 
 def generate_img(prompt: str):
