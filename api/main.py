@@ -44,13 +44,12 @@ def customer_question(usr_msg, assistant_id):
 @app.route("/get-response", methods=["POST"])
 def get_response():
     indata = request.json.get("input", "")
-    # indata=usr_msg
 
     if not indata:
         return "No message recieved"
 
-    assistant_to_use = determine_assistant(usr_msg)
-    response = customer_question(usr_msg, assistant_to_use)
+    assistant_to_use = determine_assistant(indata)
+    response = customer_question(indata, assistant_to_use)
     url = ""
     if assistant_to_use == PRODUCT_INFO_ID:
         url = generate_img("Genearate an image based about shoes")
