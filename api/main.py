@@ -20,6 +20,7 @@ CORS(app)
 THREAD = client.beta.threads.create()
 CUSTOMER_SUPPORT_ID = "asst_tNzygYXafJFqQJATdQYoEefQ"
 PRODUCT_INFO_ID = "asst_Tsjwb1LlBD3ElVP6Jbzsa6JY"
+DEFAULT_ASSISTANT_ID = CUSTOMER_SUPPORT_ID
 
 
 def customer_question(usr_msg, assistant_id):
@@ -65,12 +66,13 @@ def test_return(indata: str):
 
 
 def determine_assistant(msg: str):
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {
-                "role": "user",
-                "content": f"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"""
 You are an AI assistant router. Based on the user's message, choose the correct assistant to handle the request:
 
 - "refunds" → if the message is about returns, cancellations, or getting money back.
@@ -80,35 +82,41 @@ Respond only with one of: "refunds" or "product_info".
 
 Message: "{msg}"
 """,
-            }
-        ],
-        tool_choice="auto",
-        tools=[
-            {
-                "type": "function",
-                "function": {
-                    "name": "route_assistant",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "assistant": {
-                                "type": "string",
-                                "enum": ["refunds", "product_info"],
-                            }
+                }
+            ],
+            tool_choice="auto",
+            tools=[
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "route_assistant",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "assistant": {
+                                    "type": "string",
+                                    "enum": ["refunds", "product_info"],
+                                }
+                            },
+                            "required": ["assistant"],
                         },
-                        "required": ["assistant"],
                     },
-                },
-            }
-        ],
-    )
+                }
+            ],
+        )
 
-    args = response.choices[0].message.tool_calls[0].function.arguments
-    return (
-        CUSTOMER_SUPPORT_ID
-        if json.loads(args)["assistant"] == "refunds"
-        else PRODUCT_INFO_ID
-    )
+        args = response.choices[0].message.tool_calls[0].function.arguments
+        assistant = json.loads(args).get("assistant")
+        if assistant == "refunds":
+            return CUSTOMER_SUPPORT_ID
+        elif assistant == "product_info":
+            return PRODUCT_INFO_ID
+        else:
+            raise ValueError("Invalid assistant type")
+
+    except Exception as e:
+        print(f"Error determining assistant: {e}")
+        return DEFAULT_ASSISTANT_ID
 
 
 def generate_img(prompt: str):
