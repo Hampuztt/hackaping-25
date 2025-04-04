@@ -42,7 +42,7 @@ def customer_question(usr_msg, assistant_id):
 
 
 @app.route("/get-response", methods=["POST"])
-def get_response(usr_msg):
+def get_response():
     indata = request.json.get("input", "")
     # indata=usr_msg
 
