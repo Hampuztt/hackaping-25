@@ -112,7 +112,7 @@ Message: "{msg}"
 
 
 def generate_img(prompt: str):
-    a = client.images.generate(model="dall-e-3", prompt=prompt, n=1, size="256x256")
+    a = client.images.generate(model="dall-e-3", prompt=prompt, n=1, size="1024x1024")
     return a.data[0].url
 
 
@@ -122,6 +122,7 @@ if __name__ == "__main__":
     # print(determine_assistant(msg))
     # exit(0)
 
+    # print(generate_img("shoes"))
     # print(test_return("I'm not happy with my shoes, give me refund"))
     app.run(port="3002", debug=True)
 
