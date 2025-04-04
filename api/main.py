@@ -27,7 +27,9 @@ def customer_question(usr_msg, assistant_id):
         thread_id=THREAD.id, role="user", content=usr_msg
     )
 
-    run = client.beta.threads.runs.create(thread_id=THREAD.id, assistant_id=assistant_id)
+    run = client.beta.threads.runs.create(
+        thread_id=THREAD.id, assistant_id=assistant_id
+    )
 
     while run.status != "completed":
         run = client.beta.threads.runs.retrieve(thread_id=THREAD.id, run_id=run.id)
@@ -45,8 +47,13 @@ def customer_question(usr_msg, assistant_id):
 def get_response():
     indata = request.json.get("input", "")
 
+    response, url = test_return(indata)
+    return jsonify({"response": response, "url": url})
+
+
+def test_return(indata: str):
     if not indata:
-        return "No message recieved"
+        return "no messsage recieved", ""
 
     assistant_to_use = determine_assistant(indata)
     response = customer_question(indata, assistant_to_use)
@@ -54,7 +61,7 @@ def get_response():
     if assistant_to_use == PRODUCT_INFO_ID:
         url = generate_img("Genearate an image based about shoes")
 
-    return jsonify({"response": response, "url": url})
+    return response, url
 
 
 def determine_assistant(msg: str):
@@ -97,7 +104,11 @@ Message: "{msg}"
     )
 
     args = response.choices[0].message.tool_calls[0].function.arguments
-    return CUSTOMER_SUPPORT_ID if json.loads(args)["assistant"] == "refunds" else PRODUCT_INFO_ID
+    return (
+        CUSTOMER_SUPPORT_ID
+        if json.loads(args)["assistant"] == "refunds"
+        else PRODUCT_INFO_ID
+    )
 
 
 def generate_img(prompt: str):
@@ -107,8 +118,10 @@ def generate_img(prompt: str):
 
 if __name__ == "__main__":
     # msg = "tell me about your cool shoes"
-    # msg = "I'm not happy with my shoes, give me refund"
+    msg = "I'm not happy with my shoes, give me refund"
     # print(determine_assistant(msg))
     # exit(0)
-    # print(get_response("I'm not happy with my shoes, give me refund"))
+
+    # print(test_return("I'm not happy with my shoes, give me refund"))
     app.run(port="3002", debug=True)
+
